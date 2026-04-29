@@ -1,6 +1,5 @@
 import streamlit as st
 from supabase import create_client
-import tomllib
 import pandas as pd
 
 
@@ -15,8 +14,6 @@ st.set_page_config(page_title="DHI Pilot Portal", layout="wide")
 # 2. LOAD SECRETS
 # Reads Supabase URL and secret key from local secrets.toml
 # =========================================================
-with open("secrets.toml", "rb") as f:
-    secrets = tomllib.load(f)
 
 SUPABASE_URL = secrets["SUPABASE_URL"]
 SUPABASE_KEY = secrets["SUPABASE_SECRET_KEY"]
