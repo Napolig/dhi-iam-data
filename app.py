@@ -15,8 +15,8 @@ st.set_page_config(page_title="DHI Pilot Portal", layout="wide")
 # Reads Supabase URL and secret key from local secrets.toml
 # =========================================================
 
-SUPABASE_URL = secrets["SUPABASE_URL"]
-SUPABASE_KEY = secrets["SUPABASE_SECRET_KEY"]
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_SECRET_KEY"]
 
 
 # =========================================================
