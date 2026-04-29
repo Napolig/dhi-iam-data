@@ -99,7 +99,7 @@ def logout():
 # 6. APP HEADER
 # UI starts only after Supabase is ready
 # =========================================================
-st.title("DHI Pilot Portal")
+st.title("DHI IAM Datahub")
 
 
 # =========================================================
