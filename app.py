@@ -222,6 +222,7 @@ EXPECTED_COLUMNS = [
 # =========================================================
 # 11. FILE UPLOAD
 # =========================================================
+st.markdown("## Uploads")
 # =========================================================
 # UPLOAD MODE
 # User chooses whether to append new rows or replace all
