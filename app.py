@@ -299,13 +299,15 @@ if uploaded_file is not None:
         file_mech_norm = normalize_mechanism(file_mechanism)
         user_mech_norm = normalize_mechanism(st.session_state.ownerMechanism)
 
+        is_admin = st.session_state.user_role == "admin"
+
         mechanism_match = (
             file_mech_norm == user_mech_norm
             or file_mech_norm in user_mech_norm
             or user_mech_norm in file_mech_norm
         )
 
-        if not mechanism_match:
+        if not is_admin and not mechanism_match:
             st.error(
                 f"Mechanism mismatch: your account is linked to "
                 f"'{st.session_state.ownerMechanism}', but the file contains '{file_mechanism}'."
@@ -313,7 +315,8 @@ if uploaded_file is not None:
             st.stop()
 
         # Standardize mechanism name before saving to database
-        df["ownermechanism"] = st.session_state.ownerMechanism
+        if not is_admin:
+            df["ownermechanism"] = st.session_state.ownerMechanism
 
         # -------------------------------------------------
         # Clean dataframe
