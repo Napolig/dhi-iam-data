@@ -1,3 +1,3 @@
 .streamlit/secrets.toml
-set_test_password.py
+set_password.py
 NOTES.md
