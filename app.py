@@ -741,6 +741,7 @@ try:
 
     if rows:
         db_df = pd.DataFrame(rows)
+        db_df.index = db_df.index + 1
 
     # Rename columns for display only, so users see the agreed standard
         db_df = db_df.rename(
