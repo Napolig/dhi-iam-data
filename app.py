@@ -123,24 +123,6 @@ def log_upload(user_id, mechanism, filename, rows, status, error=None):
     except Exception as e:
         st.warning(f"Logging failed: {e}")
 
-def section(title, color="#f5f7fa"):
-    st.markdown(
-        f"""
-        <div style="
-            background-color: {color};
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        ">
-        <h3>{title}</h3>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def end_section():
-    st.markdown("</div>", unsafe_allow_html=True)
-
 
 
 # =========================================================
@@ -255,7 +237,7 @@ EXPECTED_COLUMNS = [
 # =========================================================
 # 11. FILE UPLOAD
 # =========================================================
-section("📤 Upload", "#eef6ff")
+st.markdown("📤 ## Upload")
 # =========================================================
 # UPLOAD MODE
 # User chooses whether to append new rows or replace all
@@ -561,7 +543,7 @@ end_section()
 # =========================================================
 # 11. DOWNLOADS SECTION
 # =========================================================
-section("📤 Download", "#f4f4f4")
+st.markdown("📤 ## Download")
 # ---------------------------------------------------------
 # 1. DHI Cases Master (filtered download)
 # ---------------------------------------------------------
