@@ -237,7 +237,7 @@ EXPECTED_COLUMNS = [
 # =========================================================
 # 11. FILE UPLOAD
 # =========================================================
-st.markdown("📤 ## Upload")
+st.markdown("## Upload 📤")
 # =========================================================
 # UPLOAD MODE
 # User chooses whether to append new rows or replace all
@@ -542,7 +542,7 @@ if uploaded_file is not None:
 # =========================================================
 # 11. DOWNLOADS SECTION
 # =========================================================
-st.markdown("📤 ## Download")
+st.markdown("## Download 📤")
 # ---------------------------------------------------------
 # 1. DHI Cases Master (filtered download)
 # ---------------------------------------------------------
