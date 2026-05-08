@@ -112,7 +112,7 @@ def normalize_mechanism(value):
 
 def log_upload(user_id, mechanism, filename, rows, status, error=None):
     try:
-        supabase.table("upload_logs").insert({
+        supabase.table("upload_log").insert({
             "user_id": user_id,
             "mechanism_id": mechanism,  # per ora usiamo il nome, poi possiamo migliorare
             "filename": filename,
