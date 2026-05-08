@@ -110,6 +110,39 @@ def normalize_mechanism(value):
     return value
 
 
+def log_upload(user_id, mechanism, filename, rows, status, error=None):
+    try:
+        supabase.table("upload_logs").insert({
+            "user_id": user_id,
+            "mechanism_id": mechanism,  # per ora usiamo il nome, poi possiamo migliorare
+            "filename": filename,
+            "rows_uploaded": rows,
+            "status": status,
+            "error_message": error,
+        }).execute()
+    except Exception as e:
+        st.warning(f"Logging failed: {e}")
+
+def section(title, color="#f5f7fa"):
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {color};
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        ">
+        <h3>{title}</h3>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def end_section():
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+
 # =========================================================
 # 6. APP HEADER
 # UI starts only after Supabase is ready
@@ -222,7 +255,7 @@ EXPECTED_COLUMNS = [
 # =========================================================
 # 11. FILE UPLOAD
 # =========================================================
-st.markdown("## Uploads")
+section("📤 Upload", "#eef6ff")
 # =========================================================
 # UPLOAD MODE
 # User chooses whether to append new rows or replace all
@@ -249,6 +282,8 @@ if upload_mode == "Replace all my mechanism data":
     )
 
 uploaded_file = st.file_uploader("Upload CSV file", type="csv")
+
+filename = uploaded_file.name if uploaded_file else None
 
 if uploaded_file is not None:
     try:
@@ -396,10 +431,14 @@ if uploaded_file is not None:
                         f"Upload complete. Replaced all data for {st.session_state.ownerMechanism} "
                         f"with {len(records)} rows."
                     )
-
-
-                    st.write("### Insert response")
-                    st.write(insert_response)
+                    
+                    log_upload(
+                        user_id=st.session_state.user_id,
+                        mechanism=st.session_state.ownerMechanism,
+                        filename=filename,
+                        rows=len(records),
+                        status="success"
+                    )
 
 
                 except Exception as e:
@@ -407,6 +446,14 @@ if uploaded_file is not None:
                     if backup_rows:
                         supabase.table("cases_master").insert(backup_rows).execute()
 
+                    log_upload(
+                        user_id=st.session_state.user_id,
+                        mechanism=st.session_state.ownerMechanism,
+                        filename=filename,
+                        rows=0,
+                        status="failed",
+                        error=str(e)
+                    )
 
                     st.error(
                         "Replace upload failed. The system attempted to restore the previous data "
@@ -475,6 +522,14 @@ if uploaded_file is not None:
 
                     st.success(f"{len(new_rows_df)} new rows were appended successfully.")
 
+                    log_upload(
+                        user_id=st.session_state.user_id,
+                        mechanism=st.session_state.ownerMechanism,
+                        filename=filename,
+                        rows=len(new_rows_df),
+                        status="success"
+                    )
+
 
                     st.write("### Append response")
                     st.write(insert_new_response)
@@ -491,13 +546,22 @@ if uploaded_file is not None:
 
 
     except Exception as e:
+        log_upload(
+            user_id=st.session_state.user_id,
+            mechanism=st.session_state.ownerMechanism,
+            filename=filename,
+            rows=0,
+            status="failed",
+            error=str(e)
+        )
         st.error(f"Error while processing file: {e}")
+
+end_section()
 
 # =========================================================
 # 11. DOWNLOADS SECTION
 # =========================================================
-st.markdown("## Downloads")
-
+section("📤 Download", "#f4f4f4")
 # ---------------------------------------------------------
 # 1. DHI Cases Master (filtered download)
 # ---------------------------------------------------------
@@ -687,7 +751,8 @@ except FileNotFoundError:
 # For now we still show the full table.
 # Later we can restrict visibility by role/mechanism if needed.
 # =========================================================
-st.write("## Current content of cases_master")
+st.write("## Uploaded Cases Overview")
+st.caption("The table below shows the current dataset stored in the system.")
 
 try:
     response = supabase.table("cases_master").select("*").execute()
@@ -740,3 +805,5 @@ try:
 
 except Exception as e:
     st.error(f"Could not read cases_master: {e}")
+
+end_section()
