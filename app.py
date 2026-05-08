@@ -538,7 +538,6 @@ if uploaded_file is not None:
         )
         st.error(f"Error while processing file: {e}")
 
-end_section()
 
 # =========================================================
 # 11. DOWNLOADS SECTION
@@ -788,4 +787,3 @@ try:
 except Exception as e:
     st.error(f"Could not read cases_master: {e}")
 
-end_section()
