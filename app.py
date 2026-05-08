@@ -633,9 +633,9 @@ try:
             export_csv = filtered_df.to_csv(index=False).encode("utf-8")
 
             st.download_button(
-                label="Download DHI Cases Master",
+                label="Download DHI Cases Data",
                 data=export_csv,
-                file_name="DHI_Cases_Master.csv",
+                file_name="DHI_Cases_Data.csv",
                 mime="text/csv",
             )
 
