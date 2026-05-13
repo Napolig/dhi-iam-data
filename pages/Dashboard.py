@@ -125,7 +125,7 @@ with col_year:
     st.write("## Cases by year")
 
     df["year"] = pd.to_datetime(
-        df["receptiondate"],
+        df["eligibilitydate"],
         errors="coerce"
     ).dt.year
 
