@@ -8,6 +8,7 @@ import pandas as pd
 # This must stay near the top of the file.
 # =========================================================
 st.set_page_config(page_title="DHI IAM Datahub", layout="wide")
+st.title("DHI IAM Datahub")
 
 
 # =========================================================
