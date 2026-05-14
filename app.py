@@ -346,8 +346,47 @@ if uploaded_file is not None:
         date_columns = ["approvaldate", "receptiondate", "eligibilitydate"]
 
         for col in date_columns:
-            # Convert to datetime, then to string format YYYY-MM-DD
-            df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d")
+
+            # Keep only non-empty values for validation
+            non_empty_values = df[
+                df[col].notna()
+                & (df[col].astype(str).str.strip() != "")
+            ][col].astype(str).str.strip()
+
+            # Check format YYYY-MM-DD
+            invalid_format = non_empty_values[
+                ~non_empty_values.str.match(r"^\d{4}-\d{2}-\d{2}$")
+            ]
+
+            if not invalid_format.empty:
+                st.error(
+                    f"Invalid date format detected in column '{col}'. "
+                    "Please use YYYY-MM-DD format (example: 2025-04-03). "
+                    "No data was uploaded."
+                )
+                st.stop()
+
+            # Check if the date is a real valid date
+            parsed_dates = pd.to_datetime(
+                non_empty_values,
+                format="%Y-%m-%d",
+                errors="coerce"
+            )
+
+            if parsed_dates.isna().any():
+                st.error(
+                    f"Invalid date detected in column '{col}'. "
+                    "Some values are not real calendar dates. "
+                    "No data was uploaded."
+                )
+                st.stop()
+
+            # Convert valid dates to standard format
+            df[col] = pd.to_datetime(
+                df[col],
+                format="%Y-%m-%d",
+                errors="coerce"
+            ).dt.strftime("%Y-%m-%d")
 
 
         # Convert NaN to None for database compatibility
@@ -736,7 +775,7 @@ st.write("## Uploaded Cases Overview")
 st.caption("The table below shows the current dataset stored in the system.")
 
 try:
-    response = supabase.table("cases_master").select("*").execute()
+    response = supabase.table("cases_master").select("*").order("eligibilitydate").execute()
     rows = response.data
 
     if rows:
