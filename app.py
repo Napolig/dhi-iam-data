@@ -388,6 +388,49 @@ if uploaded_file is not None:
                 errors="coerce"
             ).dt.strftime("%Y-%m-%d")
 
+        # =========================================================
+        # BOOLEAN COLUMNS VALIDATION
+        # These columns must contain only boolean-compatible values.
+        # Accepted values: 1, 0, true, false, or empty.
+        # =========================================================
+
+        boolean_columns = [
+            "impactsocial",
+            "impactcultural",
+            "impactlivelihoods",
+            "impactequity",
+            "impacthealth",
+            "impactlabour",
+            "impactenvironmental",
+            "impactproperty",
+            "impactviolence",
+            "impactstakeholderengagement",
+            "impactunclassified",
+        ]
+
+        accepted_boolean_values = {"1", "0", "true", "false", "True", "False"}
+
+        for col in boolean_columns:
+            invalid_rows = df[
+                df[col].notna()
+                & (df[col].astype(str).str.strip() != "")
+                & (~df[col].astype(str).str.strip().isin(accepted_boolean_values))
+            ]
+
+            if not invalid_rows.empty:
+                first_bad_row = invalid_rows.index[0] + 1
+                bad_value = invalid_rows.iloc[0][col]
+
+                st.error(
+                    f"Invalid boolean value detected before upload.\n\n"
+                    f"Column: '{col}'\n\n"
+                    f"Row: {first_bad_row}\n\n"
+                    f"Invalid value: '{bad_value}'\n\n"
+                    "Accepted values are: 1, 0, true, false, or empty. "
+                    "Please correct the file and upload it again. No data was uploaded."
+                )
+                st.stop()
+
 
         # Convert NaN to None for database compatibility
         # Make dataframe JSON-safe before converting to records
