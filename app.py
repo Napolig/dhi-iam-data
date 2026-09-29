@@ -269,8 +269,18 @@ filename = uploaded_file.name if uploaded_file else None
 
 if uploaded_file is not None:
     try:
-        # Read the uploaded CSV
-        df = pd.read_csv(uploaded_file)
+        
+        # Read the uploaded CSV, supporting common encodings
+        try:
+            df = pd.read_csv(uploaded_file, encoding="utf-8")
+        except UnicodeDecodeError:
+            uploaded_file.seek(0)
+            try:
+             df = pd.read_csv(uploaded_file, encoding="cp1252")
+            except UnicodeDecodeError:
+                uploaded_file.seek(0)
+                df = pd.read_csv(uploaded_file, encoding="latin-1")
+        
 
         # Trasnform the column names in lowercase for PostgreSQL
         df.columns = df.columns.str.lower()
@@ -595,9 +605,9 @@ if uploaded_file is not None:
                     )
 
 
-                    st.write("### Append response")
-                    st.write(insert_new_response)
-
+                    with st.expander("Technical upload log", expanded=False):
+                        st.write(insert_new_response)
+                    
 
                 # If there are conflicts, do not update them yet
                 if not conflict_rows_df.empty:
