@@ -263,23 +263,26 @@ if upload_mode == "Replace all my mechanism data":
         "Yes, I understand."
     )
 
-uploaded_file = st.file_uploader("Upload CSV file", type="csv")
+uploaded_file = st.file_uploader("Upload your data file", type=["csv", "xlsx"])
 
 filename = uploaded_file.name if uploaded_file else None
 
 if uploaded_file is not None:
-    try:
-        
-        # Read the uploaded CSV, supporting common encodings
-        try:
-            df = pd.read_csv(uploaded_file, encoding="utf-8")
-        except UnicodeDecodeError:
-            uploaded_file.seek(0)
+    try: 
+        # Read uploaded file
+        if uploaded_file.name.lower().endswith(".xlsx"):
+            df = pd.read_excel(uploaded_file, engine="openpyxl")
+        else:
+            # CSV: support common encodings
             try:
-             df = pd.read_csv(uploaded_file, encoding="cp1252")
+                df = pd.read_csv(uploaded_file, encoding="utf-8")
             except UnicodeDecodeError:
                 uploaded_file.seek(0)
-                df = pd.read_csv(uploaded_file, encoding="latin-1")
+                try:
+                    df = pd.read_csv(uploaded_file, encoding="cp1252")
+                except UnicodeDecodeError:
+                    uploaded_file.seek(0)
+                    df = pd.read_csv(uploaded_file, encoding="latin-1")
         
 
         # Trasnform the column names in lowercase for PostgreSQL
@@ -357,46 +360,77 @@ if uploaded_file is not None:
 
         for col in date_columns:
 
-            # Keep only non-empty values for validation
-            non_empty_values = df[
-                df[col].notna()
-                & (df[col].astype(str).str.strip() != "")
-            ][col].astype(str).str.strip()
+            # XLSX files: Excel stores dates as actual date/datetime values.
+            # Convert them directly to the DHI standard YYYY-MM-DD.
+            if uploaded_file.name.lower().endswith(".xlsx"):
 
-            # Check format YYYY-MM-DD
-            invalid_format = non_empty_values[
-                ~non_empty_values.str.match(r"^\d{4}-\d{2}-\d{2}$")
-            ]
-
-            if not invalid_format.empty:
-                st.error(
-                    f"Invalid date format detected in column '{col}'. "
-                    "Please use YYYY-MM-DD format (example: 2025-04-03). "
-                    "No data was uploaded."
+                parsed_dates = pd.to_datetime(
+                    df[col],
+                    errors="coerce"
                 )
-                st.stop()
 
-            # Check if the date is a real valid date
-            parsed_dates = pd.to_datetime(
-                non_empty_values,
-                format="%Y-%m-%d",
-                errors="coerce"
-            )
-
-            if parsed_dates.isna().any():
-                st.error(
-                    f"Invalid date detected in column '{col}'. "
-                    "Some values are not real calendar dates. "
-                    "No data was uploaded."
+                # Detect values that were present but could not be interpreted as dates
+                original_non_empty = (
+                    df[col].notna()
+                    & (df[col].astype(str).str.strip() != "")
                 )
-                st.stop()
 
-            # Convert valid dates to standard format
-            df[col] = pd.to_datetime(
-                df[col],
-                format="%Y-%m-%d",
-                errors="coerce"
-            ).dt.strftime("%Y-%m-%d")
+                invalid_dates = original_non_empty & parsed_dates.isna()
+
+                if invalid_dates.any():
+                    st.error(
+                        f"Invalid date detected in column '{col}'. "
+                        "Some values could not be interpreted as valid Excel dates. "
+                        "No data was uploaded."
+                    )
+                    st.stop()
+
+                # Standardise dates before upload to PostgreSQL
+                df[col] = parsed_dates.dt.strftime("%Y-%m-%d")
+
+            # CSV files: keep the existing strict YYYY-MM-DD validation
+            else:
+
+                # Keep only non-empty values for validation
+                non_empty_values = df[
+                    df[col].notna()
+                    & (df[col].astype(str).str.strip() != "")
+                ][col].astype(str).str.strip()
+
+                # Check format YYYY-MM-DD
+                invalid_format = non_empty_values[
+                    ~non_empty_values.str.match(r"^\d{4}-\d{2}-\d{2}$")
+                ]
+
+                if not invalid_format.empty:
+                    st.error(
+                        f"Invalid date format detected in column '{col}'. "
+                        "Please use YYYY-MM-DD format (example: 2025-04-03). "
+                        "No data was uploaded."
+                    )
+                    st.stop()
+
+                # Check if the date is a real valid date
+                parsed_dates = pd.to_datetime(
+                    non_empty_values,
+                    format="%Y-%m-%d",
+                    errors="coerce"
+                )
+
+                if parsed_dates.isna().any():
+                    st.error(
+                        f"Invalid date detected in column '{col}'. "
+                        "Some values are not real calendar dates. "
+                        "No data was uploaded."
+                    )
+                    st.stop()
+
+                # Convert valid dates to standard format
+                df[col] = pd.to_datetime(
+                    df[col],
+                    format="%Y-%m-%d",
+                    errors="coerce"
+                ).dt.strftime("%Y-%m-%d")
 
         # =========================================================
         # BOOLEAN COLUMNS VALIDATION
